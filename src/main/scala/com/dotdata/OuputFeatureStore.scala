@@ -7,23 +7,30 @@ import com.typesafe.scalalogging.LazyLogging
 import scala.collection.immutable.ListMap
 import scala.collection.mutable
 
-object OuputFeatureStore extends LazyLogging {
+class OuputFeatureStore extends LazyLogging {
 
-  private val eventIdRangePairToCountDefault  =
+  private def eventIdRangePairToCountDefault  = // new instance of default map each time
     mutable.Map[(Short,Short),Int]().withDefaultValue(0)
 
   private val datesToEventIdRangeCounts =
-    mutable.Map[Date,mutable.Map[(Short,Short),Int]]().withDefaultValue(eventIdRangePairToCountDefault)
+    mutable.Map[Date,mutable.Map[(Short,Short),Int]]().withDefault(_ => eventIdRangePairToCountDefault)
 
 
-  def addEntry(date: Date, range: Short, eventId: Short): mutable.Map[Date, mutable.Map[(Short, Short), Int]] = {
+  def addEntry(date: Date, range: Short, eventId: Short): Unit = {
     logger.info(s"addEntry: $date, $range, $eventId")
     val pairToCountMap: mutable.Map[(Short, Short), Int] = datesToEventIdRangeCounts (date)    //drop type
+
     val pair = (eventId, range)
     val count = pairToCountMap(pair)
 
-    pairToCountMap.updated(pair, count + 1)
-    datesToEventIdRangeCounts.updated(date, pairToCountMap)
+    pairToCountMap.update(pair, count + 1)
+
+
+
+    println(s"before add of $date" + datesToEventIdRangeCounts)
+    datesToEventIdRangeCounts.update(date, pairToCountMap)
+    println(s"after add of $date" + datesToEventIdRangeCounts)
+
   }
 
 
@@ -32,10 +39,13 @@ object OuputFeatureStore extends LazyLogging {
   //
   def sortByDateFeatureAndRange(): Map[Date, Seq[((Short, Short), Int)]] = {
     val sortedMapEntries: Seq[(Date, mutable.Map[(Short, Short), Int])] = datesToEventIdRangeCounts.toSeq.sortBy(_._1)
+    System.out.println("sortedMapEntries:" + sortedMapEntries);
+
     val sortedMap: Map[Date, mutable.Map[(Short, Short), Int]] = ListMap(sortedMapEntries:_*)
 
     sortedMap.map { case (date, eventIdRangeToCount) =>
       val sortedByEventIdRange: Seq[((Short, Short), Int)] = eventIdRangeToCount.toSeq.sortBy(_._1)
+      logger.debug(s"sorted $eventIdRangeToCount to $sortedByEventIdRange")
       (date, sortedByEventIdRange)
     }
   }
