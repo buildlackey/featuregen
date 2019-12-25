@@ -16,7 +16,7 @@ import scala.io.Source
   *
   *   - conserve memory by streaming items and processing one by one rather than loading everything into memory
   *
-  *   - configurability through typesafe config
+  *   - efficient representation: use Bitsets and Shorts where possible to reduce memory consumption
   *
   *
   * Engineering principles we would_have demonstrated with a bit more time
@@ -24,6 +24,8 @@ import scala.io.Source
   *   - rather than keeping all of output feature store in an in-memory map it would have been better
   *     to write the entries out one at a time, then sort in slices via quick sort, then merge the slices
   *     via merge sort
+  *
+  *   - Instead of doing a linear search through sourceDates should have instead done a binary search for speed.
   *
   */
 
@@ -36,14 +38,16 @@ case class SourceRec(date: Date, eventId: Short)
 
 
 
-
 // TODO: With more time we would take the output directory and maybe file name as a command line parameter
 //
 object FeatureGen extends App with LazyLogging {
   val outputFileName = "features.csv"
   val filteredSourceRecs: Iterator[SourceRec] = InputProvider.getFilteredSourceRecs
-  val evaluator = SourceRecEvaluator(InputProvider.getTargetRecDates, InputProvider.getRanges)
-  val featureStore =  new OuputFeatureStore()
+  val dates = InputProvider.getTargetRecDates
+  val ranges = InputProvider.getRanges
+  val evaluator = SourceRecEvaluator(dates, ranges)
+  val uniqueEvents = InputProvider.getEventIds.toSeq
+  val featureStore =  new OuputFeatureStore(ranges, uniqueEvents)
 
   filteredSourceRecs.foreach { rec =>
     logger.debug(s"evaluating source rec: $rec")

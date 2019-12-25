@@ -11,8 +11,8 @@ class OutputFeatureStoreTest extends AnyFunSpec with Matchers {
   import com.dotdata.DateFormats._
 
 
-  def getFeatureStore = {
-    val store =  new OuputFeatureStore()
+  def getFeatureStore: OuputFeatureStore = {
+    val store =  new OuputFeatureStore(Seq(),Seq())
 
     store.addEntry(dateFormat.parse("1970/01/02"), 3, 200)
     store.addEntry(dateFormat.parse("1970/01/02"), 2, 100)
@@ -29,9 +29,10 @@ class OutputFeatureStoreTest extends AnyFunSpec with Matchers {
 
   describe("OutputFeatureStore") {
     it("produces a schema with no feature fields if fed no data") {
-      val store =  new OuputFeatureStore()
+      val store =  new OuputFeatureStore(Seq(), Seq())
       store.schema shouldEqual Seq("date")
     }
+
     it("correctly sorts by date, feature and range") {
       val sorted = getFeatureStore.sortByDateFeatureAndRange()
       val keys = sorted.keys.toList
@@ -55,9 +56,23 @@ class OutputFeatureStoreTest extends AnyFunSpec with Matchers {
     }
 
     it("correctly outputs schema") {
-      val schema = getFeatureStore.schema
-      schema shouldEqual List("date", "feature(100,2)", "feature(200,1)", "feature(200,2)", "feature(200,3)")
+      val schema = new OuputFeatureStore(Seq(3,1,2), Seq(400,200,100)).schema
+      val expected =
+        List("date",
+          "feature(100,1)",
+          "feature(100,2)",
+          "feature(100,3)",
+          "feature(200,1)",
+          "feature(200,2)",
+          "feature(200,3)",
+          "feature(400,1)",
+          "feature(400,2)",
+          "feature(400,3)")
+
+      schema shouldEqual expected
     }
+
+
 
   }
 }

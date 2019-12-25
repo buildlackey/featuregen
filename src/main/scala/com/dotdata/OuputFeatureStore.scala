@@ -7,24 +7,24 @@ import com.typesafe.scalalogging.LazyLogging
 import scala.collection.immutable.ListMap
 import scala.collection.mutable
 
-class OuputFeatureStore extends LazyLogging {
+class OuputFeatureStore(ranges: Seq[Short], eventIds: Seq[Int]) extends LazyLogging {
 
-  private def eventIdRangePairToCountDefault  = // new instance of default map each time
-    mutable.Map[(Short,Short),Int]().withDefaultValue(0)
+
+  private def eventIdRangePairToCountDefault = // new instance of default map each time
+    mutable.Map[(Short, Short), Int]().withDefaultValue(0)
 
   private val datesToEventIdRangeCounts =
-    mutable.Map[Date,mutable.Map[(Short,Short),Int]]().withDefault(_ => eventIdRangePairToCountDefault)
+    mutable.Map[Date, mutable.Map[(Short, Short), Int]]().withDefault(_ => eventIdRangePairToCountDefault)
 
 
   def addEntry(date: Date, range: Short, eventId: Short): Unit = {
     logger.info(s"addEntry: $date, $range, $eventId")
-    val pairToCountMap: mutable.Map[(Short, Short), Int] = datesToEventIdRangeCounts (date)    //drop type
+    val pairToCountMap: mutable.Map[(Short, Short), Int] = datesToEventIdRangeCounts(date) //drop type
 
     val pair = (eventId, range)
     val count = pairToCountMap(pair)
 
     pairToCountMap.update(pair, count + 1)
-
 
 
     println(s"before add of $date" + datesToEventIdRangeCounts)
@@ -41,7 +41,7 @@ class OuputFeatureStore extends LazyLogging {
     val sortedMapEntries: Seq[(Date, mutable.Map[(Short, Short), Int])] = datesToEventIdRangeCounts.toSeq.sortBy(_._1)
     System.out.println("sortedMapEntries:" + sortedMapEntries);
 
-    val sortedMap: Map[Date, mutable.Map[(Short, Short), Int]] = ListMap(sortedMapEntries:_*)
+    val sortedMap: Map[Date, mutable.Map[(Short, Short), Int]] = ListMap(sortedMapEntries: _*)
 
     sortedMap.map { case (date, eventIdRangeToCount) =>
       val sortedByEventIdRange: Seq[((Short, Short), Int)] = eventIdRangeToCount.toSeq.sortBy(_._1)
@@ -56,21 +56,15 @@ class OuputFeatureStore extends LazyLogging {
   // <date>,feature(<featid>,<range>),feature(<featid>,<range>)
   //
   def schema: Seq[String] = {
+    val pairs: Seq[(Int, Short)] = for {
+      range <- ranges
+      eventId <- eventIds
+    } yield (eventId, range)
 
-    import DateFormats._
-    import scala.collection.mutable.SortedSet
-
-    val sortedUniqueFields = mutable.SortedSet[((Short,Short),String)]()
-
-    sortByDateFeatureAndRange().toSeq.foreach {
-      case (date, pairs) =>
-        pairs.map(_._1).foreach {
-          case (feature: Short, range: Short) =>
-            sortedUniqueFields.add((feature, range), s"feature($feature,$range)")
-        }
+    val featureNames =  pairs.sorted.map{
+      case (feature: Int, range: Short) => s"feature($feature,$range)"
     }
 
-    val featureNames: mutable.Set[String] = sortedUniqueFields.map{ case (pair,name) =>name}
     "date" :: featureNames.toList
   }
 
@@ -78,6 +72,8 @@ class OuputFeatureStore extends LazyLogging {
   //
   def toPrintableRep: Seq[String] = {
     import DateFormats._
+
+
 
     sortByDateFeatureAndRange().toSeq.map {
       case (date, pairs) =>
@@ -87,6 +83,6 @@ class OuputFeatureStore extends LazyLogging {
         }.mkString(",")
 
         s"${dateFormat.format(date)},$printableFeatureRangePairs}"
+    }
   }
-}
 }
