@@ -42,17 +42,18 @@ case class SourceRec(date: Date, eventId: Short)
 //
 object FeatureGen extends App with LazyLogging {
   val outputFileName = "features.csv"
-  val filteredSourceRecs: Iterator[SourceRec] = InputProvider.getFilteredSourceRecs
-  val dates = InputProvider.getTargetRecDates
-  val ranges = InputProvider.getRanges
+  val inputProvider = new InputProvider()
+  val filteredSourceRecs: Iterator[SourceRec] = inputProvider.getFilteredSourceRecs
+  val dates = inputProvider.getTargetRecDates
+  val ranges = inputProvider.getRanges
   val evaluator = SourceRecEvaluator(dates, ranges)
-  val uniqueEvents = InputProvider.getEventIds.toSeq
+  val uniqueEvents = inputProvider.getEventIds
   val featureStore =  new OuputFeatureStore(ranges, uniqueEvents)
 
   filteredSourceRecs.foreach { rec =>
     logger.debug(s"evaluating source rec: $rec")
-    evaluator.findSubsumingTargetDates(rec).foreach{ case (date,range) =>
-      featureStore.addEntry(rec.date, range, rec.eventId)
+    evaluator.findSubsumingTargetDates(rec).foreach{ case (td,range) =>
+      featureStore.addEntry(td, range, rec.eventId)
     }
   }
 

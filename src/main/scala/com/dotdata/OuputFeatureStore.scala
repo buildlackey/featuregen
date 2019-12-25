@@ -7,18 +7,23 @@ import com.typesafe.scalalogging.LazyLogging
 import scala.collection.immutable.ListMap
 import scala.collection.mutable
 
-class OuputFeatureStore(ranges: Seq[Short], eventIds: Seq[Int]) extends LazyLogging {
+class OuputFeatureStore(ranges: Seq[Short], eventIds: Seq[Short]) extends LazyLogging {
 
+  private def eventIdRangePairToCountDefault = {
+    val map = mutable.Map[(Short, Short), Int]().withDefaultValue(0)
 
-  private def eventIdRangePairToCountDefault = // new instance of default map each time
-    mutable.Map[(Short, Short), Int]().withDefaultValue(0)
-
+    eventIds.foreach{ e =>
+      ranges.foreach{ r =>
+        map.put((e,r),0)
+      }
+    }
+    map
+  }
   private val datesToEventIdRangeCounts =
     mutable.Map[Date, mutable.Map[(Short, Short), Int]]().withDefault(_ => eventIdRangePairToCountDefault)
 
-
   def addEntry(date: Date, range: Short, eventId: Short): Unit = {
-    logger.info(s"addEntry: $date, $range, $eventId")
+    logger.debug(s"addEntry: $date, $range, $eventId")
     val pairToCountMap: mutable.Map[(Short, Short), Int] = datesToEventIdRangeCounts(date) //drop type
 
     val pair = (eventId, range)
@@ -26,11 +31,9 @@ class OuputFeatureStore(ranges: Seq[Short], eventIds: Seq[Int]) extends LazyLogg
 
     pairToCountMap.update(pair, count + 1)
 
-
-    println(s"before add of $date" + datesToEventIdRangeCounts)
+    logger.debug(s"before add of $date" + datesToEventIdRangeCounts)
     datesToEventIdRangeCounts.update(date, pairToCountMap)
-    println(s"after add of $date" + datesToEventIdRangeCounts)
-
+    logger.debug(s"after add of $date" + datesToEventIdRangeCounts)
   }
 
 
@@ -56,13 +59,13 @@ class OuputFeatureStore(ranges: Seq[Short], eventIds: Seq[Int]) extends LazyLogg
   // <date>,feature(<featid>,<range>),feature(<featid>,<range>)
   //
   def schema: Seq[String] = {
-    val pairs: Seq[(Int, Short)] = for {
+    val pairs: Seq[(Short, Short)] = for {
       range <- ranges
       eventId <- eventIds
     } yield (eventId, range)
 
     val featureNames =  pairs.sorted.map{
-      case (feature: Int, range: Short) => s"feature($feature,$range)"
+      case (feature, range) => s"feature($feature,$range)"
     }
 
     "date" :: featureNames.toList

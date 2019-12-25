@@ -73,6 +73,9 @@ class OutputFeatureStoreTest extends AnyFunSpec with Matchers {
     }
 
 
+    it("rorrectly sorts by date, feature and range") {
+
+    }
 
   }
 }

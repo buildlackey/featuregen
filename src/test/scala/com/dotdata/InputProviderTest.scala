@@ -20,8 +20,8 @@ class InputProviderTest extends AnyFunSpec with Matchers {
        |Wed Dec 04 10:00:00 PST 2019
        |Thu Dec 05 17:00:00 PST 2019""".stripMargin
 
-      val dates = InputProvider.getSourceRecs.map(_.date).mkString("\n")
-      dates shouldEqual(expected)
+      val dates = new InputProvider().getSourceRecs.map(_.date).mkString("\n")
+      dates shouldEqual expected
     }
 
     it("correctly parses target table") {
@@ -30,8 +30,8 @@ class InputProviderTest extends AnyFunSpec with Matchers {
           |Wed Dec 04 00:00:00 PST 2019
           |Thu Dec 05 00:00:00 PST 2019""".stripMargin
 
-      val dates: Array[Date] = InputProvider.getTargetRecDates
-      dates.mkString("\n") shouldEqual(expected)
+      val dates: Array[Date] = new InputProvider().getTargetRecDates
+      dates.mkString("\n") shouldEqual expected
     }
 
     it("correctly filters source table") {
@@ -40,20 +40,20 @@ class InputProviderTest extends AnyFunSpec with Matchers {
           |Mon Dec 02 13:00:00 PST 2019
           |Tue Dec 03 15:00:00 PST 2019
           |Thu Dec 05 17:00:00 PST 2019""".stripMargin
-      val dates = InputProvider.getFilteredSourceRecs .map(_.date).mkString("\n")
-      dates shouldEqual(expected)
+      val dates = new InputProvider().getFilteredSourceRecs .map(_.date).mkString("\n")
+      dates shouldEqual expected
     }
 
     it("correctly parses range set file") {
       val expected = "1\n3"
-      val dates = InputProvider.getRanges.mkString("\n")
-      dates shouldEqual(expected)
+      val dates = new InputProvider().getRanges.mkString("\n")
+      dates shouldEqual expected
     }
 
     it("correctly parses event id set file") {
       val expected = "1\n2"
-      val dates = InputProvider.getEventIds.mkString("\n")
-      dates shouldEqual(expected)
+      val dates = new InputProvider().getEventIds.mkString("\n")
+      dates shouldEqual expected
     }
   }
 }

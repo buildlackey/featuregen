@@ -5,13 +5,17 @@ import java.util.Date
 import scala.collection.immutable.BitSet
 import scala.io.Source
 
-object InputProvider {
+class InputProvider() {
   import DateFormats._
 
   val source = s"${System.getProperty("user.dir")}/src/main/resources/source_table.csv"
   val target = s"${System.getProperty("user.dir")}/src/main/resources/target_table.csv"
   val eventIds = s"${System.getProperty("user.dir")}/src/main/resources/event_id_set.csv"
   val ranges = s"${System.getProperty("user.dir")}/src/main/resources/range_id_set.csv"
+
+  val ids: Seq[Short] = Source.fromFile(eventIds).getLines.map{_.toShort}.toSeq
+
+  private val bitset: Set[Int] = BitSet(ids.map(_.toInt):_*)
 
   // Don't need the dollar amounts from the target records, just the dates to do range compare
   def getTargetRecDates: Array[Date] =
@@ -24,10 +28,8 @@ object InputProvider {
   def getRanges: List[Short] =
     Source.fromFile(ranges).getLines.map{_.toShort}.toList
 
-  def getEventIds: BitSet = {
-    val ids = Source.fromFile(eventIds).getLines.map{_.toInt}.toSeq
-    BitSet(ids:_*)
-  }
+  // TODO - we are assuming max value of an event id is 10k, so we can truncate ints to shorts, but should issue warning if not
+  def getEventIds: Seq[Short] = { ids }
 
   def getSourceRecs: Iterator[SourceRec] =    // iterator so we can stream the list rather than load all at once
     Source.fromFile(source).getLines.
@@ -38,7 +40,6 @@ object InputProvider {
       }
 
   def getFilteredSourceRecs : Iterator[SourceRec] =  {
-    val eventIds = getEventIds
-    getSourceRecs.filter(rec => eventIds.contains(rec.eventId))
+    getSourceRecs.filter(rec => bitset.contains(rec.eventId))
   }
 }
