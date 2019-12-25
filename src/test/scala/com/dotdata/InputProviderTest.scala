@@ -30,7 +30,7 @@ class InputProviderTest extends AnyFunSpec with Matchers {
           |Wed Dec 04 00:00:00 PST 2019
           |Thu Dec 05 00:00:00 PST 2019""".stripMargin
 
-      val dates: Seq[Date] = InputProvider.getTargetRecDates
+      val dates: Array[Date] = InputProvider.getTargetRecDates
       dates.mkString("\n") shouldEqual(expected)
     }
 

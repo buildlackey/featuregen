@@ -14,11 +14,11 @@ object InputProvider {
   val ranges = s"${System.getProperty("user.dir")}/src/main/resources/range_id_set.csv"
 
   // Don't need the dollar amounts from the target records, just the dates to do range compare
-  def getTargetRecDates: List[Date] =
+  def getTargetRecDates: Array[Date] =
     Source.fromFile(target).getLines.
       map{ line =>
         dateFormat.parse(line.split(",")(0))
-      }.toList
+      }.toArray.sorted     // sorting these because we eventually want to use binary, not linear search
 
 
   def getRanges: List[Short] =

@@ -2,11 +2,13 @@ package com.dotdata
 
 import java.util.Date
 
+import scala.collection.mutable.ArrayBuffer
+
 
 
 // TODO - sort the list of sourceDates and do a binary search for speed.
 //
-case class SourceRecEvaluator(targetDates: List[Date], ranges: List[Short]) {
+case class SourceRecEvaluator(targetDates: Array[Date], ranges: List[Short]) {
 
   // TODO - we will need to change this once we have dates stored as Longs
   //
@@ -21,5 +23,17 @@ case class SourceRecEvaluator(targetDates: List[Date], ranges: List[Short]) {
       targetDates.exists{ date => isInRange(rec, date, range)
       }
     }
+  }
+
+  def findSubsumingTargetDates(rec: SourceRec): List[(Date,Short)] = {
+    val pairs = ArrayBuffer[(Date,Short)]()
+    targetDates.foreach{ td =>
+      ranges.foreach{ r =>
+        if (isInRange(rec, td, r)) {
+          pairs.append((td,r))
+        }
+      }
+    }
+    pairs.toList
   }
 }

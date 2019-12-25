@@ -51,8 +51,7 @@ object FeatureGen extends App with LazyLogging {
 
   filteredSourceRecs.foreach { rec =>
     logger.debug(s"evaluating source rec: $rec")
-    val rangesWithin = evaluator.findRanges(rec)
-    rangesWithin.foreach { range =>
+    evaluator.findSubsumingTargetDates(rec).foreach{ case (date,range) =>
       featureStore.addEntry(rec.date, range, rec.eventId)
     }
   }
