@@ -12,7 +12,7 @@ class OutputFeatureStoreTest extends AnyFunSpec with Matchers {
 
 
   def getFeatureStore: OuputFeatureStore = {
-    val store =  new OuputFeatureStore(Seq(),Seq())
+    val store =  new OuputFeatureStore(Seq(), Seq())
 
     store.addEntry(dateFormat.parse("1970/01/02"), 3, 200)
     store.addEntry(dateFormat.parse("1970/01/02"), 2, 100)
@@ -56,7 +56,7 @@ class OutputFeatureStoreTest extends AnyFunSpec with Matchers {
     }
 
     it("correctly outputs schema") {
-      val schema = new OuputFeatureStore(Seq(3,1,2), Seq(400,200,100)).schema
+      val schema = new OuputFeatureStore(Seq(400,200,100), Seq(3,1,2)).schema
       val expected =
         List("date",
           "feature(100,1)",
@@ -72,10 +72,14 @@ class OutputFeatureStoreTest extends AnyFunSpec with Matchers {
       schema shouldEqual expected
     }
 
+    it("for a given subsuming date, we have entries for each  feature/range pair, even if zero occurences") {
+      val ranges = Seq(3, 1).map(_.toShort)
+      val eventIds = Seq(200, 100).map(_.toShort)
+      val store = new OuputFeatureStore(eventIds, ranges)
 
-    it("rorrectly sorts by date, feature and range") {
-
+      store.addEntry(dateFormat.parse("1970/01/01"), 3, 200)
+      val result = store.sortByDateFeatureAndRange().values.toList.head.toList
+      result shouldBe List(((100,1),0), ((100,3),0), ((200,1),0), ((200,3),1))
     }
-
   }
 }

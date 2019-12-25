@@ -10,6 +10,9 @@ do
     status=$?
 done
 
-sbt test
+rm features.csv
+sbt "runMain com.dotdata.FeatureGen"
+
+echo output will be in current directory in file: features.csv
 
 

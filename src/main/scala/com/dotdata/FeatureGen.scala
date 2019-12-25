@@ -48,7 +48,7 @@ object FeatureGen extends App with LazyLogging {
   val ranges = inputProvider.getRanges
   val evaluator = SourceRecEvaluator(dates, ranges)
   val uniqueEvents = inputProvider.getEventIds
-  val featureStore =  new OuputFeatureStore(ranges, uniqueEvents)
+  val featureStore =  new OuputFeatureStore(uniqueEvents, ranges)
 
   filteredSourceRecs.foreach { rec =>
     logger.debug(s"evaluating source rec: $rec")

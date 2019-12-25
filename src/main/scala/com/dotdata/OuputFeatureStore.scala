@@ -7,7 +7,7 @@ import com.typesafe.scalalogging.LazyLogging
 import scala.collection.immutable.ListMap
 import scala.collection.mutable
 
-class OuputFeatureStore(ranges: Seq[Short], eventIds: Seq[Short]) extends LazyLogging {
+class OuputFeatureStore(eventIds: Seq[Short], ranges: Seq[Short]) extends LazyLogging {
 
   private def eventIdRangePairToCountDefault = {
     val map = mutable.Map[(Short, Short), Int]().withDefaultValue(0)
@@ -54,9 +54,8 @@ class OuputFeatureStore(ranges: Seq[Short], eventIds: Seq[Short]) extends LazyLo
   }
 
 
-  // Returns schema that will be used for first line of output features file
-  // Sorts dateToFeatureMap by date, then converts the entry for each date into an output string of the form
-  // <date>,feature(<featid>,<range>),feature(<featid>,<range>)
+  // Returns schema that will be used for first line of output features file in the form
+  // <date>,feature(<featid>,<range>),feature(<featid>,<range>)  (sorted by featureId, then range)
   //
   def schema: Seq[String] = {
     val pairs: Seq[(Short, Short)] = for {
@@ -76,9 +75,10 @@ class OuputFeatureStore(ranges: Seq[Short], eventIds: Seq[Short]) extends LazyLo
   def toPrintableRep: Seq[String] = {
     import DateFormats._
 
+    val seq = sortByDateFeatureAndRange().toSeq
+    System.out.println("seq:" + seq);
 
-
-    sortByDateFeatureAndRange().toSeq.map {
+    seq.map {
       case (date, pairs) =>
         val printableFeatureRangePairs = pairs.map(_._1).map {
           case (feature: Short, range: Short) =>

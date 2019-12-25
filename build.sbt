@@ -1,7 +1,6 @@
-name := "AkkaStreams"
+name := "dotData"
 
 version := "1.0"
-
 scalaVersion := "2.11.8"
 
 

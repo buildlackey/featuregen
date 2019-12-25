@@ -10,7 +10,7 @@ import scala.collection.mutable.ArrayBuffer
 //
 case class SourceRecEvaluator(targetDates: Array[Date], ranges: List[Short]) {
 
-  // TODO - we will need to change this once we have dates stored as Longs
+  // TODO - consider storing dates as Long instead of Date (check: any other overhead for each Date than the Long?)
   //
   def isInRange(rec: SourceRec, targetRecDate: Date, range: Short): Boolean = {
     val rangeInSeconds = range * 60 * 60 * 24 /* secs/min * min/hr * hrs/day */
@@ -27,6 +27,12 @@ case class SourceRecEvaluator(targetDates: Array[Date], ranges: List[Short]) {
 
   def findSubsumingTargetDates(rec: SourceRec): List[(Date,Short)] = {
     val pairs = ArrayBuffer[(Date,Short)]()
+
+
+    //val startIndex = searcher.gre
+
+
+
     targetDates.foreach{ td =>
       ranges.foreach{ r =>
         if (isInRange(rec, td, r)) {
