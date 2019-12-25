@@ -1,8 +1,8 @@
+package com.dotdata
+
 import java.util.Date
 
-import com.dotdata.{Configuration, InputProvider}
-import org.scalatest.funspec.{AnyFunSpec, AsyncFunSpec}
-import org.scalatest.matchers.should
+import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 
 import scala.collection.immutable._

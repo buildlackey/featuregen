@@ -27,6 +27,7 @@ import scala.io.Source
   *
   */
 
+// TODO - in run instructions mention how to turn off logging in command line
 
 case class SourceRec(date: Date, eventId: Short)
 
@@ -36,21 +37,25 @@ case class SourceRec(date: Date, eventId: Short)
 
 
 
+// TODO: With more time we would take the output directory and maybe file name as a command line parameter
+//
 object FeatureGen extends App with LazyLogging {
 
-  val outputFileName = "features.csv"
-  val filteredTargetRecs: Iterator[SourceRec] = InputProvider.getFilteredSourceRecs
-  val targetRecEvaluator = TargetRecEvaluator(InputProvider.getTargetRecDates, InputProvider.getRanges)
 
-  filteredTargetRecs.foreach { rec =>
-    val rangesWithin = targetRecEvaluator.findRanges(rec)
+  val outputFileName = "features.csv"
+  val filteredSourceRecs: Iterator[SourceRec] = InputProvider.getFilteredSourceRecs
+  val evaluator = SourceRecEvaluator(InputProvider.getTargetRecDates, InputProvider.getRanges)
+
+  filteredSourceRecs.foreach { rec =>
+    logger.debug(s"evaluating source rec: $rec")
+    val rangesWithin = evaluator.findRanges(rec)
     rangesWithin.foreach { range =>
       OuputFeatureStore.addEntry(rec.date, range, rec.eventId)
     }
   }
 
-  // With more time we would take the output directory and maybe file name as a command line parameter
   val writer = new PrintWriter(new File(outputFileName ))
+  writer.write(OuputFeatureStore.schema.mkString(","))
   OuputFeatureStore.toPrintableRep.foreach{writer.write}
   writer.close()
 }

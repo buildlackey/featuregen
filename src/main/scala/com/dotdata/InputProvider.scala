@@ -13,6 +13,7 @@ object InputProvider {
   val eventIds = s"${System.getProperty("user.dir")}/src/main/resources/event_id_set.csv"
   val ranges = s"${System.getProperty("user.dir")}/src/main/resources/range_id_set.csv"
 
+  // Don't need the dollar amounts from the target records, just the dates to do range compare
   def getTargetRecDates: List[Date] =
     Source.fromFile(target).getLines.
       map{ line =>
@@ -33,7 +34,6 @@ object InputProvider {
       map{ line =>
         val parts = line.split(",")
         val str = parts(0)
-        System.out.println("str:" + str);
         SourceRec(dateTimeFormat.parse(str), parts(1).toShort)
       }
 

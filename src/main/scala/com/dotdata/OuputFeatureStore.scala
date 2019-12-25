@@ -2,52 +2,70 @@ package com.dotdata
 
 import java.util.Date
 
+import com.typesafe.scalalogging.LazyLogging
+
 import scala.collection.immutable.ListMap
 import scala.collection.mutable
 
-object OuputFeatureStore {
-                         // range  /  list of events.
-  private val rangeToEventIdMapDefault =
-    mutable.Map[Short,mutable.Set[Short]]().withDefaultValue(mutable.Set[Short]())
-  private val dateToFeatureMap =
-    mutable.Map[Date,mutable.Map[Short,mutable.Set[Short]]]().withDefaultValue(rangeToEventIdMapDefault)
+object OuputFeatureStore extends LazyLogging {
+
+  private val eventIdRangePairToCountDefault  =
+    mutable.Map[(Short,Short),Int]().withDefaultValue(0)
+
+  private val datesToEventIdRangeCounts =
+    mutable.Map[Date,mutable.Map[(Short,Short),Int]]().withDefaultValue(eventIdRangePairToCountDefault)
 
 
-  def addEntry(date: Date, range: Short, eventId: Short): mutable.Map[Date, mutable.Map[Short, mutable.Set[Short]]] = {
-    val rangeToEventIds: mutable.Map[Short, mutable.Set[Short]] = dateToFeatureMap(date)    //drop type
-    val eventIds: mutable.Set[Short] = rangeToEventIds(range)
+  def addEntry(date: Date, range: Short, eventId: Short): mutable.Map[Date, mutable.Map[(Short, Short), Int]] = {
+    logger.info(s"addEntry: $date, $range, $eventId")
+    val pairToCountMap: mutable.Map[(Short, Short), Int] = datesToEventIdRangeCounts (date)    //drop type
+    val pair = (eventId, range)
+    val count = pairToCountMap(pair)
 
-
-    eventIds.add(eventId)
-    rangeToEventIds.updated(range, eventIds)
-    dateToFeatureMap.updated(date, rangeToEventIds)
+    pairToCountMap.updated(pair, count + 1)
+    datesToEventIdRangeCounts.updated(date, pairToCountMap)
   }
 
 
-  // Sorts dateToFeatureMap by date, then converts the entry for each date into an output string of the form
-  // <date>,feature(<featid>,<range>),feature(<featid>,<range>)
+  // Sorts datesToEventIdRangeCounts by date, then for each date, sorts the mapping of eventId/range pairs to counts
+  // using the pair as a sort key
   //
-  def sortByDateFeatureAndRange(): Map[Date, Seq[(Short, Short)]] = {
-    val sortedMapEntries: Seq[(Date, mutable.Map[Short, mutable.Set[Short]])] = dateToFeatureMap.toSeq.sortBy(_._1)
-    val sortedMap: Map[Date, mutable.Map[Short, mutable.Set[Short]]] = ListMap(sortedMapEntries:_*)
+  def sortByDateFeatureAndRange(): Map[Date, Seq[((Short, Short), Int)]] = {
+    val sortedMapEntries: Seq[(Date, mutable.Map[(Short, Short), Int])] = datesToEventIdRangeCounts.toSeq.sortBy(_._1)
+    val sortedMap: Map[Date, mutable.Map[(Short, Short), Int]] = ListMap(sortedMapEntries:_*)
 
-    sortedMap.map { case (date, rangeToFeatures) =>
-      val rangeAndFeaturePairs = rangeToFeatures.toSeq.flatMap {
-        case (range, features) =>
-          features.toSeq.map((_, range))
-      }
-
-      (date, rangeAndFeaturePairs)
+    sortedMap.map { case (date, eventIdRangeToCount) =>
+      val sortedByEventIdRange: Seq[((Short, Short), Int)] = eventIdRangeToCount.toSeq.sortBy(_._1)
+      (date, sortedByEventIdRange)
     }
   }
 
+
+  // Returns schema that will be used for first line of output features file
+  // Sorts dateToFeatureMap by date, then converts the entry for each date into an output string of the form
+  // <date>,feature(<featid>,<range>),feature(<featid>,<range>)
+  //
+  def schema: Seq[String] = {
+    val featureFields = sortByDateFeatureAndRange().toList.map {
+      case (date, pairs: Seq[((Short, Short), Int)]) =>
+        pairs.map(_._1).map {
+          case (feature: Short, range: Short) =>
+            s"feature($feature,$range)"
+        }.mkString(",")
+    }
+
+    "date" :: featureFields
+  }
+
+  // Returns printable representation of each line  of output features that will be printed after the header
+  //
   def toPrintableRep: Seq[String] = {
     import DateFormats._
 
     sortByDateFeatureAndRange().toSeq.map {
       case (date, pairs) =>
-        val printableFeatureRangePairs = pairs.map {
-          case (feature, range) =>
+        val printableFeatureRangePairs = pairs.map(_._1).map {
+          case (feature: Short, range: Short) =>
             s"feature($feature,$range)"
         }.mkString(",")
 
