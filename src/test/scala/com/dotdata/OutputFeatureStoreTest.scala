@@ -10,25 +10,30 @@ import scala.collection.immutable._
 class OutputFeatureStoreTest extends AnyFunSpec with Matchers {
   import com.dotdata.DateFormats._
 
+
+  def getFeatureStore = {
+    val store =  new OuputFeatureStore()
+
+    store.addEntry(dateFormat.parse("1970/01/02"), 3, 200)
+    store.addEntry(dateFormat.parse("1970/01/02"), 2, 100)
+    store.addEntry(dateFormat.parse("1970/01/02"), 1, 200)
+    store.addEntry(dateFormat.parse("1970/01/02"), 2, 200)
+    store.addEntry(dateFormat.parse("1970/01/02"), 2, 100)
+
+    store.addEntry(dateFormat.parse("1970/01/01"), 2, 100)
+
+    store.addEntry(dateFormat.parse("1970/01/03"), 2, 200)
+
+    store
+  }
+
   describe("OutputFeatureStore") {
     it("produces a schema with no feature fields if fed no data") {
       val store =  new OuputFeatureStore()
       store.schema shouldEqual Seq("date")
     }
     it("correctly sorts by date, feature and range") {
-      val store =  new OuputFeatureStore()
-
-      store.addEntry(dateFormat.parse("1970/01/02"), 3, 200)
-      store.addEntry(dateFormat.parse("1970/01/02"), 2, 100)
-      store.addEntry(dateFormat.parse("1970/01/02"), 1, 200)
-      store.addEntry(dateFormat.parse("1970/01/02"), 2, 200)
-      store.addEntry(dateFormat.parse("1970/01/02"), 2, 100)
-
-      store.addEntry(dateFormat.parse("1970/01/01"), 2, 100)
-
-      store.addEntry(dateFormat.parse("1970/01/03"), 2, 200)
-
-      val sorted = store.sortByDateFeatureAndRange()
+      val sorted = getFeatureStore.sortByDateFeatureAndRange()
       val keys = sorted.keys.toList
       keys(0).toString.contains("Jan 01") shouldBe true
       keys(1).toString.contains("Jan 02") shouldBe true
@@ -45,8 +50,14 @@ class OutputFeatureStoreTest extends AnyFunSpec with Matchers {
                   ((200,3),1)),
               List(((200,2),1))
       )
-      
+
       featuresForEachDate shouldEqual expected
     }
+
+    it("correctly outputs schema") {
+      val schema = getFeatureStore.schema
+      schema shouldEqual List("date", "feature(100,2)", "feature(200,1)", "feature(200,2)", "feature(200,3)")
+    }
+
   }
 }

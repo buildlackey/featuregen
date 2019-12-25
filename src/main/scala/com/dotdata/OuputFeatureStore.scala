@@ -56,15 +56,22 @@ class OuputFeatureStore extends LazyLogging {
   // <date>,feature(<featid>,<range>),feature(<featid>,<range>)
   //
   def schema: Seq[String] = {
-    val featureFields = sortByDateFeatureAndRange().toList.map {
-      case (date, pairs: Seq[((Short, Short), Int)]) =>
-        pairs.map(_._1).map {
+
+    import DateFormats._
+    import scala.collection.mutable.SortedSet
+
+    val sortedUniqueFields = mutable.SortedSet[((Short,Short),String)]()
+
+    sortByDateFeatureAndRange().toSeq.foreach {
+      case (date, pairs) =>
+        pairs.map(_._1).foreach {
           case (feature: Short, range: Short) =>
-            s"feature($feature,$range)"
-        }.mkString(",")
+            sortedUniqueFields.add((feature, range), s"feature($feature,$range)")
+        }
     }
 
-    "date" :: featureFields
+    val featureNames: mutable.Set[String] = sortedUniqueFields.map{ case (pair,name) =>name}
+    "date" :: featureNames.toList
   }
 
   // Returns printable representation of each line  of output features that will be printed after the header
@@ -80,6 +87,6 @@ class OuputFeatureStore extends LazyLogging {
         }.mkString(",")
 
         s"${dateFormat.format(date)},$printableFeatureRangePairs}"
-    }
   }
+}
 }
