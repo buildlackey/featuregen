@@ -29,6 +29,8 @@ object StreamApp  {
 
     val source: Source[Int, NotUsed] = Source(1 to 100)
     val factorials: Source[BigInt, NotUsed] = source.scan(BigInt(1))((acc, next) => acc * next)
+
+
     val sink1 = lineSink("factorial1.txt")
     val sink2 = lineSink("factorial2.txt")
     val slowSink2 = Flow[String].via(Flow[String].throttle(1, 1.second, 1, ThrottleMode.shaping)).toMat(sink2)(Keep.right)
